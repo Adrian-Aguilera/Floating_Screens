@@ -6,8 +6,10 @@ def main() -> None:
 
     import tkinter as tk
 
+    from .display.windows import enable_dpi_awareness
     from .ui.main_window import MainWindow
 
+    enable_dpi_awareness()
     root = tk.Tk()
     MainWindow(root)
     root.mainloop()

@@ -7,7 +7,7 @@ authors = [
     { name = "Adrian-Aguilera", email = "cruz74270@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = ["windows-capture==2.0.1", "Pillow>=11,<14"]
 
 [project.scripts]
 floating-screens = "winshare:main"

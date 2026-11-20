@@ -1,4 +1,4 @@
-"""Map normalized mouse positions onto the destination's primary display."""
+"""Map normalized mouse positions onto the Windows virtual desktop."""
 
 from .win32 import mouse
 
@@ -15,7 +15,7 @@ class Mouse:
             if type(position) is not int or not 0 <= position <= 65535:
                 raise ValueError("Posición del mouse inválida.")
         kind = message["type"]
-        flags = 0x8001
+        flags = 0xC001
         data = 0
         if kind == "button":
             button = message.get("button")
