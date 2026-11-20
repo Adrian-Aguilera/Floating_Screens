@@ -1,0 +1,20 @@
+[project]
+name = "floating-screens"
+version = "0.1.0"
+description = "LAN mouse and keyboard sharing for Windows"
+readme = "README.md"
+authors = [
+    { name = "Adrian-Aguilera", email = "cruz74270@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+floating-screens = "winshare:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "winshare"
