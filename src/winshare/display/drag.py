@@ -9,6 +9,7 @@ from .geometry import moved_without_resizing, qualifies_drag
 class DragMonitor:
     def __init__(self, released):
         self.released = released
+        self.pending_drop = None
         self.drag = None
         self.cancelled = False
         self.moved = False
@@ -19,6 +20,10 @@ class DragMonitor:
             raise OSError("No se pudo observar el movimiento de ventanas.")
 
     def poll(self):
+        # WinEvent can interrupt Tcl. Dispatch application code from the Tk timer.
+        pending, self.pending_drop = self.pending_drop, None
+        if pending is not None:
+            self.released(*pending)
         if self.drag is None:
             return
         if windows.down(0x1B):
@@ -32,6 +37,7 @@ class DragMonitor:
 
     def close(self):
         windows.unhook(self.hook)
+        self.pending_drop = None
 
     def _event(self, _hook, event, hwnd, _object, _child, _thread, _time):
         if not hwnd:
@@ -52,4 +58,4 @@ class DragMonitor:
             moved = self.moved or (was_maximized and not windows.maximized(hwnd))
             if end and point and qualifies_drag(start, end, mouse, windows.down(0x01),
                                                 self.cancelled or windows.down(0x1B), moved):
-                self.released(hwnd, point)
+                self.pending_drop = (hwnd, point)

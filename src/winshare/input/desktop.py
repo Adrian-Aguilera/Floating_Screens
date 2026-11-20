@@ -31,6 +31,7 @@ class DesktopOrigin:
         self.retained_keys = set()
         self.retained_buttons = set()
         self.pending_move = None
+        self.pending_entry = None
         self.cooldown = 0
         self.clipboard = None
         self.last_local = None
@@ -40,6 +41,7 @@ class DesktopOrigin:
         if enabled and self.hooks is None:
             self.hooks = DesktopHooks(self._mouse, self._key)
         elif not enabled:
+            self.pending_entry = None
             self.stop()
             if self.hooks:
                 self.hooks.close()
@@ -103,8 +105,6 @@ class DesktopOrigin:
     def _mouse(self, message, event):
         point = (event.point.x, event.point.y)
         try:
-            if self.link and self.link.stopped.is_set():
-                self.stop(notify=False)
             if not self.active:
                 button = BUTTONS.get(message)
                 if button and button[0] in self.retained_buttons:
@@ -114,8 +114,8 @@ class DesktopOrigin:
                 if message == 0x200:
                     old = self.last_local or windows.cursor()
                     self.last_local = point
-                    if not self.link and old is not None:
-                        self._begin(point, (point[0] - old[0], point[1] - old[1]))
+                    if not self.link and old is not None and old != point:
+                        self.pending_entry = (point, (point[0] - old[0], point[1] - old[1]))
                 return False
             if self.return_requested:
                 return True
@@ -142,8 +142,8 @@ class DesktopOrigin:
                            **normalized(self.remote, self.remote_point))
             return True
         except (OSError, ValueError):
-            self.stop()
-            return False
+            self.return_requested = True
+            return self.active
 
     def _key(self, _message, event):
         vk, pressed = event.vk, not bool(event.flags & 0x80)
@@ -164,11 +164,15 @@ class DesktopOrigin:
             if not self.return_requested and 8 <= vk <= 254:
                 self._send("key", vk=vk, extended=bool(event.flags & 1), down=pressed)
         except ConnectionError:
-            self.stop()
+            self.return_requested = True
         return True
 
     def poll(self):
+        # Native hooks can interrupt Tcl. Resolve routes and update UI from the Tk timer.
+        entry, self.pending_entry = self.pending_entry, None
         if not self.link:
+            if entry is not None:
+                self._begin(*entry)
             return
         if (self.return_requested or self.link.stopped.is_set()
                 or (not self.active and time.monotonic() > self.deadline)):

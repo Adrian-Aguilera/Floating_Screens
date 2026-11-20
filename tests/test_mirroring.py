@@ -86,11 +86,17 @@ class NetworkTests(unittest.TestCase):
     def test_tls_control_bidirectional_and_bad_key(self):
         key = new_key()
         server_events, client_events, endings = queue.Queue(), queue.Queue(), queue.Queue()
-        server = Destination(
-            "Destino", [], tls_context(key, server=True), lambda _link: None,
-            lambda link, batch: self._reply(link, batch, server_events),
-            lambda _link: server_events.put("disconnect"),
-        )
+        create_server = socket.create_server
+        with patch("winshare.network.session.socket.create_server",
+                   side_effect=lambda _address, **kwargs: create_server(("127.0.0.1", 0), **kwargs)):
+            server = Destination(
+                "Destino", [], tls_context(key, server=True), lambda _link: None,
+                lambda link, batch: self._reply(link, batch, server_events),
+                lambda _link: server_events.put("disconnect"),
+            )
+        port = patch("winshare.network.session.PORT", server.listener.getsockname()[1])
+        port.start()
+        self.addCleanup(port.stop)
         self.addCleanup(server.thread.join, 4)
         self.addCleanup(server.stop)
         wrong = Origin("127.0.0.1", tls_context(new_key(), server=False),
