@@ -11,7 +11,7 @@ from .window import WindowCapture
 
 
 class SourceShare:
-    def __init__(self, link, assignment, hwnd, failed):
+    def __init__(self, link, monitor, hwnd, failed):
         self.link = link
         self.target = TargetInput(hwnd)
         self.token = secrets.token_hex(32)
@@ -21,7 +21,7 @@ class SourceShare:
         self.last_state = None
         self.deadline = time.monotonic() + 5
         self.send("share", title=windows.title(hwnd) or "Ventana compartida",
-                  monitor=assignment.remote, edge=assignment.edge)
+                  monitor=monitor)
 
     def send(self, kind, **fields):
         self.link.outbox.send(kind, token=self.token, **fields)

@@ -6,13 +6,13 @@ from typing import BinaryIO
 
 PORT = 49731
 VIDEO_PORT = 49732
-VERSION = 2
-MAX_MESSAGE = 16 * 1024
+VERSION = 3
+MAX_MESSAGE = 320 * 1024
 MAX_FRAME = 2 * 1024 * 1024
 
 
 def encode(kind: str, **fields: object) -> bytes:
-    record = json.dumps({"type": kind, **fields}, separators=(",", ":")).encode() + b"\n"
+    record = json.dumps({"type": kind, **fields}, separators=(",", ":"), ensure_ascii=False).encode() + b"\n"
     if len(record) > MAX_MESSAGE:
         raise ValueError("Mensaje demasiado largo.")
     return record

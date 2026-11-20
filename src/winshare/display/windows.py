@@ -28,6 +28,7 @@ def bind(name, result, *arguments):
 foreground = bind("GetForegroundWindow", wt.HWND)
 visible = bind("IsWindowVisible", wt.BOOL, wt.HWND)
 minimized = bind("IsIconic", wt.BOOL, wt.HWND)
+maximized = bind("IsZoomed", wt.BOOL, wt.HWND)
 exists = bind("IsWindow", wt.BOOL, wt.HWND)
 ancestor = bind("GetAncestor", wt.HWND, wt.HWND, wt.UINT)
 window_from_point = bind("WindowFromPoint", wt.HWND, wt.POINT)
@@ -110,12 +111,12 @@ def owns_point(hwnd, x, y):
     return bool(hit and ancestor(hit, 2) == hwnd)
 
 
-def place_mirror(window, monitor, edge):
+def place_mirror(window, monitor):
     window.update_idletasks()
     child = window.winfo_id()
     hwnd = ancestor(child, 2) or child
     work = monitor.work
     width, height = min(1000, work.width), min(720, work.height)
-    x = work.right - width if edge == 0 else work.left
-    y = work.bottom - height if edge == 2 else work.top
+    x = work.left + (work.width - width) // 2
+    y = work.top + (work.height - height) // 2
     set_pos(hwnd, None, x, y, width, height, 0x0014)

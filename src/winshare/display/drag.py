@@ -23,10 +23,12 @@ class DragMonitor:
             return
         if windows.down(0x1B):
             self.cancelled = True
-        hwnd, start, mouse = self.drag
+        hwnd, start, mouse, was_maximized = self.drag
         if mouse and not self.moved and windows.down(0x01):
             current = windows.bounds(hwnd)
-            self.moved = bool(current and moved_without_resizing(start, current))
+            self.moved = bool(current and (
+                moved_without_resizing(start, current) or (was_maximized and not windows.maximized(hwnd))
+            ))
 
     def close(self):
         windows.unhook(self.hook)
@@ -41,12 +43,13 @@ class DragMonitor:
             owner = windows.identity(hwnd)
             start = windows.bounds(hwnd)
             if start and owner and owner[0] != os.getpid() and windows.foreground() == hwnd:
-                self.drag = (hwnd, start, windows.down(0x01))
+                self.drag = (hwnd, start, windows.down(0x01), windows.maximized(hwnd))
         elif self.drag and self.drag[0] == hwnd:
-            _, start, mouse = self.drag
+            _, start, mouse, was_maximized = self.drag
             self.drag = None
             end = windows.bounds(hwnd)
             point = windows.cursor()
+            moved = self.moved or (was_maximized and not windows.maximized(hwnd))
             if end and point and qualifies_drag(start, end, mouse, windows.down(0x01),
-                                                self.cancelled or windows.down(0x1B), self.moved):
+                                                self.cancelled or windows.down(0x1B), moved):
                 self.released(hwnd, point)

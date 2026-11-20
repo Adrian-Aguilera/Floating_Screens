@@ -19,7 +19,7 @@ LABELS = {
 
 
 class Mirror:
-    def __init__(self, root, title, monitor, edge, send, close):
+    def __init__(self, root, title, monitor, send, close):
         self.window = tk.Toplevel(root)
         self.window.withdraw()
         self.window.title(title)
@@ -27,6 +27,7 @@ class Mirror:
         self.window.protocol("WM_DELETE_WINDOW", close)
         self.send = send
         self.focused = False
+        self.suspended = False
         self.state = "paused"
         self.frame = None
         self.photo = None
@@ -48,9 +49,19 @@ class Mirror:
         self.canvas.bind("<MouseWheel>", self._wheel)
         self.window.bind("<Unmap>", lambda _event: self._focus(False))
         self.window.deiconify()
-        windows.place_mirror(self.window, monitor, edge)
+        windows.place_mirror(self.window, monitor)
+
+    def suspend(self, suspended):
+        self.suspended = suspended
+        if suspended:
+            self._focus(False)
+            if self.canvas.focus_get() is self.canvas:
+                self.window.focus_set()
+        self._caption()
 
     def _focus(self, active):
+        if active and self.suspended:
+            return
         if self.focused != active:
             self.focused = active
             self.send("focus", active=active)
@@ -60,6 +71,8 @@ class Mirror:
         message = LABELS[self.state]
         if self.state == "active" and not self.focused:
             message = "Haz clic en la imagen para controlar la ventana."
+        if self.suspended:
+            message = "Control del espejo en pausa durante el cambio de PC."
         self.status.configure(text=message)
 
     def set_state(self, state):
@@ -114,7 +127,7 @@ class Mirror:
             self.last_move = now
 
     def _button(self, event, down):
-        if down and not self.focused:
+        if down and not self.focused and not self.suspended:
             self.canvas.focus_set()
             return "break"
         position = self._position(event)
