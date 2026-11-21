@@ -17,6 +17,7 @@ from ..pairing.security import new_key, tls_context
 from .drop_box import DropBox
 from .received_share import ReceivedShare
 from .screen_map import ScreenMap
+from .window_picker import choose_window
 
 
 class MainWindow:
@@ -66,7 +67,7 @@ class MainWindow:
         ttk.Button(actions, text="Configurar borde", command=self._configure_edge).pack(
             side="right", padx=6
         )
-        self.drop_box = DropBox(self.source_panel)
+        self.drop_box = DropBox(self.source_panel, self._pick_window)
         self.drop_box.pack(fill="x", pady=(0, 8))
         self.stop_share_button = ttk.Button(self.drop_box, text="Dejar de compartir",
                                             command=self._stop_source, state="disabled")
@@ -196,9 +197,19 @@ class MainWindow:
         self._redraw()
 
     def _dropped(self, hwnd, point):
-        if not self.role.get() or self.closing or windows.foreground() != hwnd:
+        if self.drop_box.contains(point):
+            self._share_window(hwnd)
+
+    def _pick_window(self):
+        hwnd = choose_window(self.root)
+        if hwnd is not None:
+            self._share_window(hwnd)
+
+    def _share_window(self, hwnd):
+        if not self.role.get() or self.closing:
             return
-        if not self.drop_box.contains(point):
+        if not windows.exists(hwnd) or not windows.visible(hwnd):
+            self.status.set("La ventana seleccionada ya no está disponible.")
             return
         address, monitor = self.drop_box.address, self.drop_box.monitor_name
         if address not in self.connected or monitor is None:
@@ -402,6 +413,7 @@ class MainWindow:
 
     def _poll(self):
         self.drag.poll()
+        self.drop_box.indicate_drag(self.drag.pointer() if self.role.get() else None)
         for _ in range(100):
             try:
                 kind, *event = self.events.get_nowait()

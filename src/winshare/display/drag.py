@@ -35,6 +35,11 @@ class DragMonitor:
                 moved_without_resizing(start, current) or (was_maximized and not windows.maximized(hwnd))
             ))
 
+    def pointer(self):
+        if self.drag and self.drag[2] and not self.cancelled and windows.down(0x01):
+            return windows.cursor()
+        return None
+
     def close(self):
         windows.unhook(self.hook)
         self.pending_drop = None
@@ -42,6 +47,7 @@ class DragMonitor:
     def _event(self, _hook, event, hwnd, _object, _child, _thread, _time):
         if not hwnd:
             return
+        hwnd = windows.ancestor(hwnd, 2) or hwnd
         if event == 0x000A:
             self.drag = None
             self.cancelled = False

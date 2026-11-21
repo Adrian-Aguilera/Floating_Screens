@@ -10,7 +10,7 @@ Comparte ventanas y usa un solo mouse y teclado en dos PCs con Windows en la mis
 
 ## Compartir una ventana
 
-En **Compartir ventana**, elige la PC y el monitor en los que quieres abrir el espejo. Arrastra la ventana activa por la barra de título y suéltala en la caja azul. El espejo se abre en el monitor elegido y puedes moverlo y redimensionarlo. Puedes cerrarlo desde el destino o pulsar **Dejar de compartir** en el origen.
+En **Compartir ventana**, elige la PC y el monitor en los que quieres abrir el espejo. Arrastra la ventana por una zona libre de la barra de título y suéltala cuando la caja azul se ilumine. También puedes pulsar **Elegir ventana abierta…** y seleccionar una ventana de la lista. El espejo se abre en el monitor elegido y puedes moverlo y redimensionarlo. Puedes cerrarlo desde el destino o pulsar **Dejar de compartir** en el origen.
 
 El espejo permite controlar la ventana original mientras ambas tienen el foco en sus respectivas PCs. Esa entrada se pausa cuando el origen controla el escritorio del destino por el borde.
 

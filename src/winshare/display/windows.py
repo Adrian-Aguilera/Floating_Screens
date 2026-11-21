@@ -1,6 +1,7 @@
 """Native monitor, window and cursor queries."""
 
 import ctypes as ct
+import os
 from ctypes import wintypes as wt
 
 from ..input.win32 import user32
@@ -109,6 +110,33 @@ def desktop_bounds():
 def owns_point(hwnd, x, y):
     hit = window_from_point(wt.POINT(x, y))
     return bool(hit and ancestor(hit, 2) == hwnd)
+
+
+def open_windows():
+    """Return titled, visible top-level application windows, including minimized ones."""
+    result = []
+    callback_type = ct.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    enumerate_windows = bind("EnumWindows", wt.BOOL, callback_type, wt.LPARAM)
+    desktop_shell = bind("GetShellWindow", wt.HWND)()
+    own_process = os.getpid()
+
+    @callback_type
+    def collect(hwnd, _data):
+        if hwnd == desktop_shell or not visible(hwnd):
+            return True
+        owner = identity(hwnd)
+        if not owner or owner[0] == own_process:
+            return True
+        cloaked = wt.DWORD()
+        if dwmapi.DwmGetWindowAttribute(hwnd, 14, ct.byref(cloaked), ct.sizeof(cloaked)) == 0 and cloaked.value:
+            return True
+        caption = title(hwnd).strip()
+        if caption:
+            result.append((hwnd, caption))
+        return True
+
+    enumerate_windows(collect, 0)
+    return sorted(result, key=lambda item: item[1].casefold())
 
 
 def place_mirror(window, monitor):

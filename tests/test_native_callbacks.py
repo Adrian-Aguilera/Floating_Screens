@@ -10,6 +10,7 @@ from winshare.input.desktop import DesktopOrigin
 class NativeCallbackTests(unittest.TestCase):
     @patch("winshare.display.drag.windows")
     def test_drop_dispatch_waits_for_the_tk_poll(self, windows):
+        windows.ancestor.return_value = 42
         windows.identity.return_value = (0, 1)
         windows.foreground.return_value = 42
         windows.bounds.side_effect = [Rect(0, 0, 100, 100), Rect(20, 30, 120, 130)]

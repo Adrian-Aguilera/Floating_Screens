@@ -8,7 +8,7 @@ from .screen_map import label
 
 
 class DropBox(ttk.LabelFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, pick):
         super().__init__(parent, text="Compartir ventana", padding=8)
         self.targets = []
         self.addresses = []
@@ -20,9 +20,39 @@ class DropBox(ttk.LabelFrame):
         self.destination.bind("<<ComboboxSelected>>", lambda _event: self._update_monitors())
         self.monitor = ttk.Combobox(fields, state="readonly", width=14)
         self.monitor.pack(side="left")
-        self.area = tk.Label(self, background="#dcecff", foreground="#17345a", height=3,
-                             text="Arrastra aquí la ventana por su barra de título y suéltala.")
+        self.area = tk.Label(self, height=3, borderwidth=2, relief="groove",
+                             font=("Segoe UI", 10, "bold"), wraplength=530)
         self.area.pack(fill="x")
+        self.hover = False
+        self.drag_over = False
+        self.area.bind("<Enter>", lambda _event: self._set_hover(True))
+        self.area.bind("<Leave>", lambda _event: self._set_hover(False))
+        self.pick = ttk.Button(self, text="Elegir ventana abierta…", command=pick)
+        self.pick.pack(anchor="w", pady=(6, 0))
+        self._paint()
+
+    def _set_hover(self, hover):
+        self.hover = hover
+        self._paint()
+
+    def indicate_drag(self, point):
+        over = point is not None and self.contains(point)
+        if over != self.drag_over:
+            self.drag_over = over
+            self._paint()
+
+    def _paint(self):
+        enabled = self.monitor_name is not None
+        if not enabled:
+            text, fill, ink = "Conecta una PC para compartir una ventana", "#eef2f7", "#475569"
+        elif self.drag_over:
+            text, fill, ink = "Suelta para compartir la ventana", "#205ca2", "#ffffff"
+        elif self.hover:
+            text, fill, ink = "Suelta aquí la ventana arrastrada desde su barra de título", "#bfdbfe", "#17345a"
+        else:
+            text, fill, ink = "Arrastra una ventana aquí por su barra de título", "#e4efff", "#17345a"
+        self.area.configure(text=text, background=fill, foreground=ink)
+        self.pick.configure(state="normal" if enabled else "disabled")
 
     @property
     def address(self):
@@ -52,6 +82,7 @@ class DropBox(ttk.LabelFrame):
             self.monitor.current(next((i for i, m in enumerate(self.targets) if m.name == chosen), 0))
         else:
             self.monitor.set("")
+        self._paint()
 
     def contains(self, point):
         if not self.area.winfo_viewable():
